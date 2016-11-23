@@ -4,7 +4,7 @@ storescp>stow
 This executable is a complement to dcmtk storescp which forwards with DICOMweb stow to dcm4chee-arc-light the files received by DICOM storescp.
 
 dcmtk storescp launchd should be set somehow like that:
-
+```
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -45,9 +45,11 @@ dcmtk storescp launchd should be set somehow like that:
 	<true/>
 </dict>
 </plist>
+```
 
 The -su parameter indicates that the study folder is named after the StudyInstanceUID
 The -xcs parameter triggers stow with the following parameters:
+
 1. calling aet
 2. calling ip
 3. path to the study folder
