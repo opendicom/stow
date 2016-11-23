@@ -1,0 +1,16 @@
+
+*.xcworkspacedata
+
+*.xccheckout
+
+*.xcbkptlist
+
+*.xcscheme
+
+stow.xcodeproj/xcuserdata/jacquesfauquex.xcuserdatad/xcschemes/xcschememanagement.plist
+
+stow.xcodeproj/xcuserdata/root.xcuserdatad/xcschemes/xcschememanagement.plist
+
+stow
+
+*.xcuserstate
