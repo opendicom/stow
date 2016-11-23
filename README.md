@@ -1,9 +1,9 @@
 # stow
 storescp>stow
 
-This executable is a complement to dcmtk storescp which forwards with DICOMweb stow to dcm4chee-arc-light the files received by DICOM storescp.
+This executable is a complement to dcmtk storescp which forwards the files received using dcm4chee-arc-light DICOMweb stow API.
 
-dcmtk storescp launchd should be set somehow like that:
+dcmtk storescp launchd should be set somehow like that (secure connection parameters may be added):
 ```
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
