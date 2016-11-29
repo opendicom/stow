@@ -603,7 +603,7 @@ OFCondition DJCodecEncoder::encodeTrueLossless(
     // create encoder corresponding to bit depth (8 or 16 bit)
     DJEncoder *jpeg = createEncoderInstance(toRepParam, djcp, OFstatic_cast(Uint8, bitsAllocated));
     
-    printf("dcmjpeg/djcodece.cc DJCodecEncoder::encodeTrueLossless line 603\r\n");
+    //JF printf("dcmjpeg/djcodece.cc DJCodecEncoder::encodeTrueLossless line 606\r\n");
     unsigned int pixelDataLength=0;
     unsigned char md5[CC_MD5_DIGEST_LENGTH];
     if (jpeg)

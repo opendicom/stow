@@ -34,50 +34,10 @@
 #include "J2KR(noCodec).h"
 #import "sys/xattr.h"
 
-#define myunlink unlink
 static NSError *err=nil;
-static NSFileManager *fileManager=nil;
-
-BOOL moveSOPInstance(NSString *src, NSArray *fileNames, NSString *dst, NSString *aet, NSString *ip)
-{
-    if([fileManager fileExistsAtPath:dst]) return FALSE;
-    if(![fileManager createDirectoryAtPath:dst withIntermediateDirectories:YES attributes:nil error:nil])
-    {
-        NSLog(@"could not create folder: %@",dst);
-        return false;
-    }
-    //http://superuser.com/questions/82106/where-does-spotlight-store-its-metadata-index/256311#256311
-    //osascript -e 'on run {f, c}' -e 'tell app "Finder" to set comment of (POSIX file f as alias) to c' -e end /Users/jacquesfauquex/a hola
-    [NSTask launchedTaskWithLaunchPath:@"/usr/bin/osascript"
-                             arguments:@[@"-e",
-                                         @"on run {f, c}",
-                                         @"-e",
-                                         @"tell app \"Finder\" to set comment of (POSIX file f as alias) to c",
-                                         @"-e",
-                                         @"end",
-                                         dst,
-                                         [NSString stringWithFormat:@"%@@%@",aet,ip]
-                                         ]
-     ];
-    
-    BOOL noFailure=true;
-    for (NSString *fileName in fileNames)
-    {
-        if (![fileManager moveItemAtPath:[src stringByAppendingPathComponent:fileName] toPath:[dst stringByAppendingPathComponent:fileName]error:&err])
-        {
-            NSLog(@"%@", [err description]);
-            noFailure=false;
-        }
-    }
-    return noFailure;
-}
-
-
 int main(int argc, const char * argv[])
 {
     @autoreleasepool {
-        fileManager=[NSFileManager defaultManager];
-        
         unsigned short dashDash = 0x2D2D;
         NSData *dashDashData =[NSData dataWithBytes:&dashDash length:2];
         
@@ -118,33 +78,62 @@ int main(int argc, const char * argv[])
          [2] "179.24.147.16",
          [3] "/Volumes/TM/wfmFIR/DICOM/1.2.840.113619.2.81.290.27016.43807.20161109.210126",
          [4] "http://192.168.0.7:8080/dcm4chee-arc/aets/%@/rs/studies"
-         [5] CHP
-         corresponder’a a
-            [5] codec=OPJ
-            [6] 00081060=-^-^-
-            [7] 00200010=29991231235959
-            [8] 00080090=-^-^-^-
-            [9] 00080080=institutionName
+         [5] [institutionMapping.plist]
          */
         NSArray *args=[[NSProcessInfo processInfo] arguments];
         if (([args count]!=5) && ([args count]!=6)) NSLog(@"ERROR stow args received: %@",[args description]);
         else
         {
-            NSDictionary *CHP=nil;
-            if ([args[5]isEqualToString:@"CHP"]) CHP=[NSDictionary dictionaryWithContentsOfFile:@"CHP.plist"];
-            NSLog(@"%@",[CHP description]);
+            NSDictionary *institutionMapping=nil;
+            if (args[5])
+            {
+                institutionMapping=[NSDictionary dictionaryWithContentsOfFile:args[5]];
+                NSLog(@"%@",[institutionMapping description]);
+            }
 
-            NSRange timestampSeparator=[args[3] rangeOfString:@"#"];
-            NSString *StudyInstanceUID;
-            if (timestampSeparator.length)StudyInstanceUID=[args[3] substringToIndex:timestampSeparator.location];
-            else StudyInstanceUID=args[3];
+            NSString *StudyInstanceUID=[args[3] lastPathComponent];
             NSString *pacsURI=[NSString stringWithFormat:args[4],args[1]];
             
 #pragma mark loop SOPInstanceUID
-            NSArray *SOPInstanceUIDs=[fileManager contentsOfDirectoryAtPath:args[3] error:&err];
+            NSArray *SOPInstanceUIDs=[[NSFileManager defaultManager] contentsOfDirectoryAtPath:args[3] error:&err];
             NSUInteger SOPInstanceCount=[SOPInstanceUIDs count];
             NSMutableData *body = [NSMutableData data];
             NSMutableArray *packaged=[NSMutableArray array];
+            
+            DJEncoderRegistration::registerCodecs(
+                                                  ECC_lossyRGB,
+                                                  EUC_never,
+                                                  OFFalse,
+                                                  OFFalse,
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  OFTrue,
+                                                  ESS_444,
+                                                  OFFalse,
+                                                  OFFalse,
+                                                  0,
+                                                  0,
+                                                  0.0,
+                                                  0.0,
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  OFTrue,
+                                                  OFTrue,
+                                                  OFFalse,
+                                                  OFFalse,
+                                                  OFTrue);
+
+            //com.apple.metadata:_kMDItemUserTags
+            //http://nshipster.com/extended-file-attributes/
+            //http://apple.stackexchange.com/questions/110662/possible-to-tag-a-folder-via-terminal
+            const char *name = "com.apple.metadata:_kMDItemUserTags";
+            const char *red = [@"(\"not stowed\n6\")" UTF8String];
+            const char *green = [@"(\"stowed\n2\")" UTF8String];
+            BOOL studyStowed=true;
+
             for (NSUInteger i=0; i<SOPInstanceCount; i++)
             {
                 
@@ -154,66 +143,93 @@ int main(int argc, const char * argv[])
                 [body appendData:ctadData];
                 
                 NSString *filePath=[args[3] stringByAppendingPathComponent:SOPInstanceUIDs[i]];
-#pragma mark CHP
-                if ([args[5]isEqualToString:@"CHP"])
+                
+                DcmFileFormat fileformat;
+                OFCondition cond = fileformat.loadFile( [filePath UTF8String]);
+                DcmDataset *dataset = fileformat.getDataset();
+                DcmXfer original_xfer(dataset->getOriginalXfer());
+                BOOL mayJ2KR=false;
+                if (!original_xfer.isEncapsulated())
                 {
-                    DcmFileFormat fileformat;
-                    OFCondition cond = fileformat.loadFile( [filePath UTF8String]);
-                    DcmDataset *dataset = fileformat.getDataset();
-                    DcmXfer original_xfer(dataset->getOriginalXfer());
-                    BOOL mayJ2KR=false;
-                    if (!original_xfer.isEncapsulated())
-                    {
-                        DJ_RPLossy JP2KParamsLossLess(0 );//DCMLosslessQuality
-                        DcmRepresentationParameter *params = &JP2KParamsLossLess;
-                        DcmXfer oxferSyn( EXS_JPEG2000LosslessOnly);
-                        dataset->chooseRepresentation(EXS_JPEG2000LosslessOnly, params);
-                        if (dataset->canWriteXfer(EXS_JPEG2000LosslessOnly)) mayJ2KR=true;
-                        else NSLog(@"cannot J2KR: %@)",filePath);
-                    }
+                    DJ_RPLossy JP2KParamsLossLess(0 );//DCMLosslessQuality
+                    DcmRepresentationParameter *params = &JP2KParamsLossLess;
+                    DcmXfer oxferSyn( EXS_JPEG2000LosslessOnly);
+                    dataset->chooseRepresentation(EXS_JPEG2000LosslessOnly, params);
+                    if (dataset->canWriteXfer(EXS_JPEG2000LosslessOnly)) mayJ2KR=true;
+                    else NSLog(@"cannot J2KR: %@)",filePath);
+                }
+                fileformat.loadAllDataIntoMemory();
+
+#pragma mark metadata adjustments for all files
+
+                // 00081060=-^-^- NameofPhysiciansReadingStudy
+                delete dataset->remove( DcmTagKey( 0x0008, 0x1060));
+                dataset->putAndInsertString( DcmTagKey( 0x0008, 0x1060),[@"-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
+
+                // 00200010=29991231235959
+                delete dataset->remove( DcmTagKey( 0x0020, 0x0010));
+                dataset->putAndInsertString( DcmTagKey( 0x0020, 0x0010),[@"29991231235959" cStringUsingEncoding:NSASCIIStringEncoding] );
+
+                // 00080090=-^-^-^-
+                delete dataset->remove( DcmTagKey( 0x0008, 0x0090));
+                dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0090),[@"-^-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
+                
+                //remove SQ reqService
+                delete dataset->remove( DcmTagKey( 0x0032, 0x1034));
+                
+                // "GEIIS" The problematic private group, containing a *always* JPEG compressed PixelData
+                delete dataset->remove( DcmTagKey( 0x0009, 0x1110));
+
+#pragma mark institutionName adjustments
+                if (institutionMapping)
+                {
                     
-                    fileformat.loadAllDataIntoMemory();
-                    
-#pragma mark metadata adjustments
-                    // 00081060=-^-^- NameofPhysiciansReadingStudy
-                    delete dataset->remove( DcmTagKey( 0x0008, 0x1060));
-                    dataset->putAndInsertString( DcmTagKey( 0x0008, 0x1060),[@"-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
-                    // 00200010=29991231235959
-                    delete dataset->remove( DcmTagKey( 0x0020, 0x0010));
-                    dataset->putAndInsertString( DcmTagKey( 0x0020, 0x0010),[@"29991231235959" cStringUsingEncoding:NSASCIIStringEncoding] );
-                    // 00080090=-^-^-^-
-                    delete dataset->remove( DcmTagKey( 0x0008, 0x0090));
-                    dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0090),[@"-^-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
                     // 00080080=institutionName
-                    NSString *institutionName=CHP[args[1]];
-                    if (!institutionName) institutionName=CHP[args[2]];
+                    NSString *institutionName=institutionMapping[args[1]];
+                    if (!institutionName) institutionName=institutionMapping[args[2]];
                     if (institutionName)
                     {
                         delete dataset->remove( DcmTagKey( 0x0008, 0x0080));
                         dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0080),[institutionName cStringUsingEncoding:NSASCIIStringEncoding] );
                     }
-                    
-                    
-                    //remove SQ reqService
-                    delete dataset->remove( DcmTagKey( 0x0032, 0x1034));
-                    
-                    // "GEIIS" The problematic private group, containing a *always* JPEG compressed PixelData
-                    delete dataset->remove( DcmTagKey( 0x0009, 0x1110));
-                    
-#pragma mark compress (revisar bien a que corresponde toda esta sintaxis!!!)
-                    
-                    //write compressed file
-                    cond = fileformat.saveFile( [@"/Users/jacquesfauquex/Desktop/done/j2k.dcm" UTF8String], EXS_JPEG2000LosslessOnly);
-                    if (!cond.good())
-                    {
-                        NSLog(@"cannot save J2KR for:%@)",filePath);
-                        //myunlink([i fileSystemRepresentation]);
-                    }
-                    
-                    
                 }
-                else [body appendData:[NSData dataWithContentsOfFile:filePath]];
-                [packaged addObject:SOPInstanceUIDs[i]];
+                
+                
+#pragma mark compress and add to stream (revisar bien a que corresponde toda esta sintaxis!!!)
+                NSString *J2KR=[filePath stringByAppendingPathExtension:@"j2kr"];
+                NSString *ELE=[filePath stringByAppendingPathExtension:@"ele"];
+                if (
+                       mayJ2KR
+                    && (
+                        (fileformat.saveFile(
+                         [J2KR UTF8String],
+                         EXS_JPEG2000LosslessOnly
+                         )
+                        ).good()
+                       )
+                    )
+                {
+                    [body appendData:[NSData dataWithContentsOfFile:J2KR]];
+                    [packaged addObject:J2KR];
+                }
+                else if (
+                         (fileformat.saveFile(
+                                              [ELE UTF8String],
+                                              EXS_LittleEndianExplicit
+                                              )
+                          ).good()
+                         )
+                {
+                    [body appendData:[NSData dataWithContentsOfFile:ELE]];
+                    [packaged addObject:ELE];
+                }
+                else
+                {
+                    [body appendData:[NSData dataWithContentsOfFile:filePath]];
+                    [packaged addObject:SOPInstanceUIDs[i]];
+                }
+
+                
 #pragma mark send stow
                 if (([body length] > 40000000) || (i==SOPInstanceCount-1))
                 {
@@ -225,7 +241,7 @@ int main(int argc, const char * argv[])
                      [NSURL URLWithString:
                       [NSString stringWithFormat:@"%@/%@",
                        pacsURI,
-                       [StudyInstanceUID lastPathComponent]]]];
+                       StudyInstanceUID]]];
                     [request setHTTPMethod:@"POST"];
                     [request setTimeoutInterval:300];
                     NSString *contentType = [NSString stringWithFormat:@"multipart/related;type=application/dicom;boundary=%@", boundaryString];
@@ -242,6 +258,7 @@ int main(int argc, const char * argv[])
                             )
                         )
                     {
+                        studyStowed=false;
                         /*
                          Failure
                          =======
@@ -266,43 +283,67 @@ int main(int argc, const char * argv[])
                          
                          */
                         
-                        NSString *dest=[[[[[
-                                            [StudyInstanceUID stringByDeletingLastPathComponent]
-                                            stringByDeletingLastPathComponent]
-                                           stringByAppendingPathComponent:@"ERROR"]
-                                          stringByAppendingPathComponent:[StudyInstanceUID lastPathComponent]]
-                                         stringByAppendingString:@"#"]
-                                        stringByAppendingString:[[NSDate date]descriptionWithCalendarFormat:@"%Y%m%d%H%M%S" timeZone:nil locale:nil]];
-                        if (moveSOPInstance(args[3], packaged, dest, args[1], args[2])) NSLog(@"response status code:%ld error:%@\r\nmoved to: %@",(long)[response statusCode],[err description],dest);
-                        else NSLog(@"response status code:%ld error:%@\r\ncould not be moved to: %@\r\nList of sent files:\r\n%@",(long)[response statusCode],[err description],dest,[packaged description]);
+                        for (NSString *fp in packaged)
+                        {
+                            const char *c = [fp fileSystemRepresentation];
+                            if (setxattr(c, name, red, strlen(red), 0, 0)==-1)NSLog(@"not stowed and not red-colored %@",fp);
+                            if (![[fp pathExtension]isEqualToString:@"dcm"])
+                            {
+                                NSString *fpd=[fp stringByDeletingPathExtension];
+                                const char *d = [fpd fileSystemRepresentation];
+                                if (setxattr(d, name, red, strlen(red), 0, 0)==-1)NSLog(@"not stowed and not red-colored %@",fpd);
+                            }
+                            
+                        }
                     }
                     else
                     {
-                        //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
-                        NSString *dest=[[[[[
-                                            [StudyInstanceUID stringByDeletingLastPathComponent]
-                                            stringByDeletingLastPathComponent]
-                                           stringByAppendingPathComponent:@"STOWED"]
-                                          stringByAppendingPathComponent:[StudyInstanceUID lastPathComponent]]
-                                         stringByAppendingString:@"#"]
-                                        stringByAppendingString:[[NSDate date]descriptionWithCalendarFormat:@"%Y%m%d%H%M%S" timeZone:nil locale:nil]];
-                        if (!moveSOPInstance(args[3], packaged, dest, args[1], args[2])) NSLog(@"could not move all sent files to %@\r\nList of sent files:\r\n%@",dest,[packaged description]);
-                        NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURI,[StudyInstanceUID lastPathComponent]];
+                        for (NSString *fp in packaged)
+                        {
+                            const char *c = [fp fileSystemRepresentation];
+                            if (setxattr(c, name, green, strlen(green), 0, 0)==-1)NSLog(@"stowed but not green-colored %@",fp);
+                            if (![[fp pathExtension]isEqualToString:@"dcm"])
+                            {
+                                NSString *fpd=[fp stringByDeletingPathExtension];
+                                const char *d = [fpd fileSystemRepresentation];
+                                if (setxattr(d, name, green, strlen(green), 0, 0)==-1)NSLog(@"stowed but not gren-colored %@",fpd);
+                            }
+                            
+                        }
+                        
+                        NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURI,StudyInstanceUID];
                         //NSLog(@"%@",qidoRequest);
                         NSData *qidoResponse=[NSData dataWithContentsOfURL:[NSURL URLWithString:qidoRequest]];
-                        if (!qidoResponse) NSLog(@"could not verify pacs reception of %@",dest);
+                        if (!qidoResponse) NSLog(@"could not verify pacs reception");
                         else
                         {
                             NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&err][0];
                             
-                            NSLog(@"%@ (%@,%@,%@)",dest,((d[@"00201206"])[@"Value"])[0],((d[@"00080061"])[@"Value"])[0],((d[@"00201208"])[@"Value"])[0]);
+                            NSLog(@"(%@,%@,%@)",((d[@"00201206"])[@"Value"])[0],((d[@"00080061"])[@"Value"])[0],((d[@"00201208"])[@"Value"])[0]);
                         }
                     }
                     [body setData:[NSData data]];
                     [packaged removeAllObjects];
                 }
             }
-            if (![[fileManager contentsOfDirectoryAtPath:args[3] error:&err]count]) [fileManager removeItemAtPath:args[3] error:&err];
+            const char *f = [args[3] fileSystemRepresentation];
+            if (studyStowed && (setxattr(f, name, green, strlen(green), 0, 0)==-1))NSLog(@"stowed but not gren-colored %@",args[3]);
+            else if (!(setxattr(f, name, red, strlen(red), 0, 0)==-1))NSLog(@"not stowed and not gren-colored %@",args[3]);
+    
+            //http://superuser.com/questions/82106/where-does-spotlight-store-its-metadata-index/256311#256311
+            //osascript -e 'on run {f, c}' -e 'tell app "Finder" to set comment of (POSIX file f as alias) to c' -e end /Users/jacquesfauquex/a hola
+            [NSTask launchedTaskWithLaunchPath:@"/usr/bin/osascript"
+                                     arguments:@[@"-e",
+                                                 @"on run {f, c}",
+                                                 @"-e",
+                                                 @"tell app \"Finder\" to set comment of (POSIX file f as alias) to c",
+                                                 @"-e",
+                                                 @"end",
+                                                 args[3],
+                                                 [NSString stringWithFormat:@"%@@%@",args[1],args[2]]
+                                                 ]
+             ];
+
         }
     }
     return 0;

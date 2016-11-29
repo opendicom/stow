@@ -1740,7 +1740,7 @@
 		4A16A2051DECABC5007E10B2 /* oftimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = oftimer.h; path = "Binaries/dcmtk-source/ofstd/oftimer.h"; sourceTree = "<group>"; };
 		4A16A2061DECABC5007E10B2 /* oftypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = oftypes.h; path = "Binaries/dcmtk-source/ofstd/oftypes.h"; sourceTree = "<group>"; };
 		4A16A2071DECABC5007E10B2 /* ofuoset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ofuoset.h; path = "Binaries/dcmtk-source/ofstd/ofuoset.h"; sourceTree = "<group>"; };
-		4A16A4871DECD53B007E10B2 /* CHP.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = CHP.plist; sourceTree = "<group>"; };
+		4A16A4871DECD53B007E10B2 /* institutionMapping.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = institutionMapping.plist; sourceTree = "<group>"; };
 		4A16A76F1DED1900007E10B2 /* storestow */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = storestow; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A16A7701DED1A64007E10B2 /* storestow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = storestow.mm; sourceTree = "<group>"; };
 		4A9059EC1CEF908600A9CA2F /* ODvr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ODvr.h; sourceTree = "<group>"; };
@@ -2438,7 +2438,7 @@
 			isa = PBXGroup;
 			children = (
 				4A16A7701DED1A64007E10B2 /* storestow.mm */,
-				4A16A4871DECD53B007E10B2 /* CHP.plist */,
+				4A16A4871DECD53B007E10B2 /* institutionMapping.plist */,
 				4A16A3101DECAC9C007E10B2 /* dcmtk-j2kr(static) */,
 				4A169D771DE7B8DC007E10B2 /* README.md */,
 				84A9D44712F7F8BE00DA1F99 /* KDU32 */,
