@@ -14,3 +14,6 @@ stow.xcodeproj/xcuserdata/root.xcuserdatad/xcschemes/xcschememanagement.plist
 stow
 
 *.xcuserstate
+
+build/*
+

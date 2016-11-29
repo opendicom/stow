@@ -92,7 +92,10 @@ int main(int argc, const char * argv[])
             }
 
             NSString *StudyInstanceUID=[args[3] lastPathComponent];
-            NSString *pacsURI=[NSString stringWithFormat:args[4],args[1]];
+            NSString *pacsURIString=[NSString stringWithFormat:args[4],args[1]];
+            NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
+            NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
+
             
 #pragma mark loop SOPInstanceUID
             NSArray *SOPInstanceUIDs=[[NSFileManager defaultManager] contentsOfDirectoryAtPath:args[3] error:&err];
@@ -231,17 +234,14 @@ int main(int argc, const char * argv[])
 
                 
 #pragma mark send stow
-                if (([body length] > 40000000) || (i==SOPInstanceCount-1))
+                if (([body length] > 10000000) || (i==SOPInstanceCount-1))
                 {
+                    NSLog(@"sending: %d bytes",[body length]);
                     //finalize body
                     [body appendData:cdbdcData];
                     //create request
                     NSMutableURLRequest *request=
-                    [NSMutableURLRequest requestWithURL:
-                     [NSURL URLWithString:
-                      [NSString stringWithFormat:@"%@/%@",
-                       pacsURI,
-                       StudyInstanceUID]]];
+                    [NSMutableURLRequest requestWithURL:pacsURI];
                     [request setHTTPMethod:@"POST"];
                     [request setTimeoutInterval:300];
                     NSString *contentType = [NSString stringWithFormat:@"multipart/related;type=application/dicom;boundary=%@", boundaryString];
@@ -251,6 +251,8 @@ int main(int argc, const char * argv[])
                     //send stow
                     NSHTTPURLResponse *response;
                     NSData *responseData=[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&err];
+                    NSLog(@"%@",[response description]);
+                    //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
                     if (  !responseData
                         ||!(
                             ([response statusCode]==200)
@@ -311,15 +313,18 @@ int main(int argc, const char * argv[])
                             
                         }
                         
-                        NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURI,StudyInstanceUID];
-                        //NSLog(@"%@",qidoRequest);
                         NSData *qidoResponse=[NSData dataWithContentsOfURL:[NSURL URLWithString:qidoRequest]];
                         if (!qidoResponse) NSLog(@"could not verify pacs reception");
                         else
                         {
                             NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&err][0];
                             
-                            NSLog(@"(%@,%@,%@)",((d[@"00201206"])[@"Value"])[0],((d[@"00080061"])[@"Value"])[0],((d[@"00201208"])[@"Value"])[0]);
+                            NSLog(@"qido:%@ (%@ series, %@ modalities,%@ images)",
+                                  [args[3] lastPathComponent],
+                                  ((d[@"00201206"])[@"Value"])[0],
+                                  ((d[@"00080061"])[@"Value"])[0],
+                                  ((d[@"00201208"])[@"Value"])[0]
+                                  );
                         }
                     }
                     [body setData:[NSData data]];
@@ -327,8 +332,14 @@ int main(int argc, const char * argv[])
                 }
             }
             const char *f = [args[3] fileSystemRepresentation];
-            if (studyStowed && (setxattr(f, name, green, strlen(green), 0, 0)==-1))NSLog(@"stowed but not gren-colored %@",args[3]);
-            else if (!(setxattr(f, name, red, strlen(red), 0, 0)==-1))NSLog(@"not stowed and not gren-colored %@",args[3]);
+            if (studyStowed)
+            {
+                if(-1==setxattr(f, name, green, strlen(green), 0, 0))NSLog(@"stowed but not gren-colored %@",args[3]);
+            }
+            else
+            {
+                if (-1==setxattr(f, name, red, strlen(red), 0, 0))NSLog(@"not stowed and not gren-colored %@",args[3]);
+            }
     
             //http://superuser.com/questions/82106/where-does-spotlight-store-its-metadata-index/256311#256311
             //osascript -e 'on run {f, c}' -e 'tell app "Finder" to set comment of (POSIX file f as alias) to c' -e end /Users/jacquesfauquex/a hola
