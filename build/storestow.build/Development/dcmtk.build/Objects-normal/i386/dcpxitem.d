@@ -1,0 +1,32 @@
+dependencies: \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/dcmdata/dcpxitem.cc \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/config/osconfig.h \
+  Binaries/dcmtk-source/config/cfunix.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofstdinc.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofstream.h \
+  Binaries/dcmtk-source/dcmdata/dcpxitem.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofconsol.h \
+  Binaries/dcmtk-source/ofstd/ofthread.h \
+  Binaries/dcmtk-source/ofstd/oftypes.h \
+  Binaries/dcmtk-source/ofstd/ofstring.h \
+  Binaries/dcmtk-source/ofstd/ofcast.h \
+  Binaries/dcmtk-source/ofstd/ofstdinc.h \
+  Binaries/dcmtk-source/dcmdata/dctypes.h \
+  Binaries/dcmtk-source/dcmdata/dcvrobow.h \
+  Binaries/dcmtk-source/dcmdata/dcelem.h \
+  Binaries/dcmtk-source/dcmdata/dcerror.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofcond.h \
+  Binaries/dcmtk-source/dcmdata/dcobject.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofglobal.h \
+  Binaries/dcmtk-source/dcmdata/dcxfer.h \
+  Binaries/dcmtk-source/dcmdata/dcvr.h \
+  Binaries/dcmtk-source/dcmdata/dctag.h \
+  Binaries/dcmtk-source/dcmdata/dctagkey.h \
+  Binaries/dcmtk-source/dcmdata/dclist.h \
+  Binaries/dcmtk-source/dcmdata/dcstack.h \
+  Binaries/dcmtk-source/dcmdata/dcofsetl.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/oflist.h \
+  Binaries/dcmtk-source/dcmdata/dcswap.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofstd.h \
+  Binaries/dcmtk-source/dcmdata/dcistrma.h \
+  Binaries/dcmtk-source/dcmdata/dcostrma.h

@@ -1,0 +1,22 @@
+dependencies: \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/dcmimgle/dimoopx.cc \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/config/osconfig.h \
+  Binaries/dcmtk-source/config/cfunix.h \
+  Binaries/dcmtk-source/dcmimgle/dimoopx.h \
+  Binaries/dcmtk-source/dcmimgle/diutils.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/dcmdata/dctypes.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/oftypes.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofstdinc.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/ofstd/ofglobal.h \
+  Binaries/dcmtk-source/ofstd/ofthread.h \
+  Binaries/dcmtk-source/ofstd/ofstring.h \
+  Binaries/dcmtk-source/ofstd/ofcast.h \
+  Binaries/dcmtk-source/ofstd/ofstdinc.h \
+  Binaries/dcmtk-source/ofstd/ofstream.h \
+  Binaries/dcmtk-source/dcmimgle/dimopx.h \
+  Binaries/dcmtk-source/dcmimgle/dipixel.h \
+  Binaries/dcmtk-source/dcmimgle/dimomod.h \
+  Binaries/dcmtk-source/dcmimgle/diluptab.h \
+  /Users/jacquesfauquex/stow/Binaries/dcmtk-source/dcmdata/dctagkey.h \
+  Binaries/dcmtk-source/dcmimgle/dibaslut.h \
+  Binaries/dcmtk-source/dcmimgle/diobjcou.h
