@@ -1,4 +1,4 @@
-# stow
+# storestow
 storescp>stow
 
 This executable is a complement to dcmtk storescp which forwards the files received using dcm4chee-arc-light DICOMweb stow API.
@@ -54,6 +54,25 @@ The -xcs parameter triggers stow with the following parameters:
 2. calling ip
 3. path to the study folder
 4. url of dcm4chee-arc-light stow (%@ shall be replaced by calling aet)
+5. institutionMapping.plist
 
-Operation logs are visible from console.app and also spotlight searchable.
-Study folders received in /DICOM are moved to /STOWED when the operation was successfull or to /ERROR if there was a problem.
+Operation logs are visible from console.app and also spotlight searchable within the spool folder (user tags and spotlight comments are automatically generated).
+
+##Metadata coercion
+
+* 00081060=-^-^- (NameOfPhysiciansReadingStudy)
+* 00200010=29991231235959 (StudyId)
+* 00080090=-^-^-^- (RequestingPhysician)
+* 00321034 removed (RequestingService
+* 00091110 removed ("GEIIS", problematic private group containing JPEG compressed PixelData
+
+These coercions are performed so that the corresponding fields values don´t remain NULL in the PACS database.
+
+## ->J2KR
+
+When received as explicit little endian and is possible, the file is encoded J2KR before being stowed. Pixel data length and md5 before compression are kept in the metadata for eventual auditing.
+
+## InstitutionName
+
+May be coerced based on calling AET or calling IP. A Plist dictionary contains the mapping.
+

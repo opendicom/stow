@@ -1457,6 +1457,7 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		4A04FF241CD924B900A8BB5D /* NSString+opendicom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+opendicom.h"; sourceTree = "<group>"; };
 		4A04FF251CD924B900A8BB5D /* NSString+opendicom.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "NSString+opendicom.mm"; sourceTree = "<group>"; };
+		4A0EBA3F1DEEDAA000ECDC6C /* TODO.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = TODO.txt; sourceTree = "<group>"; };
 		4A1685891DE6584D007E10B2 /* libz.1.2.8.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.2.8.tbd; path = usr/lib/libz.1.2.8.tbd; sourceTree = SDKROOT; };
 		4A1685931DE75871007E10B2 /* libopenjp2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libopenjp2.a; sourceTree = "<group>"; };
 		4A1685941DE758F4007E10B2 /* format_defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = format_defs.h; sourceTree = "<group>"; };
@@ -2437,6 +2438,7 @@
 		29B97314FDCFA39411CA2CEA /* OsiriX */ = {
 			isa = PBXGroup;
 			children = (
+				4A0EBA3F1DEEDAA000ECDC6C /* TODO.txt */,
 				4A16A7701DED1A64007E10B2 /* storestow.mm */,
 				4A16A4871DECD53B007E10B2 /* institutionMapping.plist */,
 				4A16A3101DECAC9C007E10B2 /* dcmtk-j2kr(static) */,
