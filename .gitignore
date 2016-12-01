@@ -7,10 +7,12 @@
 
 *.xcscheme
 
-stow.xcodeproj/xcuserdata/jacquesfauquex.xcuserdatad/xcschemes/xcschememanagement.plist
-
-stow.xcodeproj/xcuserdata/root.xcuserdatad/xcschemes/xcschememanagement.plist
-
-stow
+storestow.xcodeproj/xcuserdata/*
 
 *.xcuserstate
+
+build/*
+
+libkdu_v73R.a
+
+*~
