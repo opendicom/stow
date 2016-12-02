@@ -74,22 +74,19 @@ int main(int argc, const char * argv[])
 #pragma mark args
         /*
          [0] "/Users/Shared/stow/stow",
-         [1] X,
+         [1] DCM4CHEE,
          [2] "179.24.147.16",
          [3] "/Volumes/TM/wfmFIR/DICOM/1.2.840.113619.2.81.290.27016.43807.20161109.210126",
          [4] "http://192.168.0.7:8080/dcm4chee-arc/aets/%@/rs/studies"
          [5] [institutionMapping.plist]
          */
         NSArray *args=[[NSProcessInfo processInfo] arguments];
-        if (([args count]!=5) && ([args count]!=6)) NSLog(@"ERROR stow args received: %@",[args description]);
+        if (([args count]!=5) && ([args count]!=6)) NSLog(@"ERROR storestow args number");
         else
         {
             NSDictionary *institutionMapping=nil;
-            if (args[5])
-            {
-                institutionMapping=[NSDictionary dictionaryWithContentsOfFile:args[5]];
-                NSLog(@"%@",[institutionMapping description]);
-            }
+            if (args[5]) institutionMapping=[NSDictionary dictionaryWithContentsOfFile:args[5]];
+
 
             NSString *StudyInstanceUID=[args[3] lastPathComponent];
             NSString *pacsURIString=[NSString stringWithFormat:args[4],args[1]];
@@ -251,8 +248,6 @@ int main(int argc, const char * argv[])
                     //send stow
                     NSHTTPURLResponse *response;
                     NSData *responseData=[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&err];
-                    NSLog(@"%@",[response description]);
-                    //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
                     if (  !responseData
                         ||!(
                             ([response statusCode]==200)
@@ -260,6 +255,8 @@ int main(int argc, const char * argv[])
                             )
                         )
                     {
+                        NSLog(@"%@",[response description]);
+                        //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
                         studyStowed=false;
                         /*
                          Failure
@@ -319,10 +316,11 @@ int main(int argc, const char * argv[])
                         {
                             NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&err][0];
                             
-                            NSLog(@"qido:%@ (%@ series, %@ modalities,%@ images)",
+                            NSLog(@"wado:%d qido:%@ (%@,%@,%@)",
+                                  [response statusCode],
                                   [args[3] lastPathComponent],
-                                  ((d[@"00201206"])[@"Value"])[0],
                                   ((d[@"00080061"])[@"Value"])[0],
+                                  ((d[@"00201206"])[@"Value"])[0],
                                   ((d[@"00201208"])[@"Value"])[0]
                                   );
                         }
