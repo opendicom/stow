@@ -317,7 +317,7 @@ int main(int argc, const char * argv[])
                             NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&err][0];
                             
                             //NSLog(@"%@",[args[3] lastPathComponent]);
-                            NSLog(@"status:%d   -   mods:(%@)   series:%@   objects:%@",
+                            NSLog(@"status:%d\r\n%@ - %@/%@",
                                   [response statusCode],
                                   ((d[@"00080061"])[@"Value"])[0],
                                   ((d[@"00201206"])[@"Value"])[0],
