@@ -1,8 +1,10 @@
+//for all targets
+
 #import <Foundation/Foundation.h>
-#import <CommonCrypto/CommonDigest.h>
+#import <CommonCrypto/CommonDigest.h> /* for md5 */
 
 #undef verify
-#include "osconfig.h" /* make sure OS specific configuration is included first */
+#include "osconfig.h"  /* make sure OS specific configuration is included first */
 #include "djdecode.h"  /* for dcmjpeg decoders */
 #include "djencode.h"  /* for dcmjpeg encoders */
 #include "djrploss.h"

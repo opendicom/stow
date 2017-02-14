@@ -34,7 +34,7 @@
 #include "J2KR(noCodec).h"
 #import "sys/xattr.h"
 
-static NSError *err=nil;
+static NSError *error=nil;
 int main(int argc, const char * argv[])
 {
     @autoreleasepool {
@@ -65,294 +65,302 @@ int main(int argc, const char * argv[])
         
         //ctad: Content-Type:application/dicom
         NSData *ctadData=[@"Content-Type:application/dicom\r\n\r\n" dataUsingEncoding:NSASCIIStringEncoding];
+
+        NSMutableData *body = [NSMutableData data];
+        NSMutableArray *packaged=[NSMutableArray array];
         
+        DJEncoderRegistration::registerCodecs(
+                                              ECC_lossyRGB,
+                                              EUC_never,
+                                              OFFalse,
+                                              OFFalse,
+                                              0,
+                                              0,
+                                              0,
+                                              OFTrue,
+                                              ESS_444,
+                                              OFFalse,
+                                              OFFalse,
+                                              0,
+                                              0,
+                                              0.0,
+                                              0.0,
+                                              0,
+                                              0,
+                                              0,
+                                              0,
+                                              OFTrue,
+                                              OFTrue,
+                                              OFFalse,
+                                              OFFalse,
+                                              OFTrue);
         
-        
-        
-        NSLog(@"%@",[[[NSProcessInfo processInfo] arguments]description]);
-        
+        //com.apple.metadata:_kMDItemUserTags
+        //http://nshipster.com/extended-file-attributes/
+        //http://apple.stackexchange.com/questions/110662/possible-to-tag-a-folder-via-terminal
+        const char *name = "com.apple.metadata:_kMDItemUserTags";
+        const char *red = [@"(\"not stowed\n6\")" UTF8String];
+        const char *green = [@"(\"stowed\n2\")" UTF8String];
+
 #pragma mark args
         /*
          [0] "/Users/Shared/stow/stow",
-         [1] DCM4CHEE,
-         [2] "179.24.147.16",
-         [3] "/Volumes/TM/wfmFIR/DICOM/1.2.840.113619.2.81.290.27016.43807.20161109.210126",
-         [4] "http://192.168.0.7:8080/dcm4chee-arc/aets/%@/rs/studies"
-         [5] [institutionMapping.plist]
+         [1] path to institutionMapping.plist
+         [2] path to the root folder
+         [3] url string del PACS "http://192.168.0.7:8080/dcm4chee-arc/aets/%@/rs/studies"
          */
         NSArray *args=[[NSProcessInfo processInfo] arguments];
-        if (([args count]!=5) && ([args count]!=6)) NSLog(@"ERROR storestow args number");
-        else
+        NSDictionary *institutionMapping=nil;
+        institutionMapping=[NSDictionary dictionaryWithContentsOfFile:args[1]];
+        NSLog(@"%@",[institutionMapping description]);
+        
+#pragma mark loop CLASSIFIED
+        
+        NSFileManager *fileManager=[NSFileManager defaultManager];
+        NSString *CLASSIFIED=[args[2] stringByAppendingPathComponent:@"CLASSIFIED"];
+        NSString *DISCARDED=[args[2] stringByAppendingPathComponent:@"DISCARDED"];
+        NSString *ORIGINALS=[args[2] stringByAppendingPathComponent:@"ORIGINALS"];
+        NSString *COERCED=[args[2] stringByAppendingPathComponent:@"COERCED"];
+        NSString *REJECTED=[args[2] stringByAppendingPathComponent:@"REJECTED"];
+        NSString *STOWED=[args[2] stringByAppendingPathComponent:@"STOWED"];
+
+        NSArray *CLASSIFIEDarray=[fileManager contentsOfDirectoryAtPath:CLASSIFIED error:nil];
+        for (NSString *CLASSIFIEDname in CLASSIFIEDarray)
         {
-            NSDictionary *institutionMapping=nil;
-            if (args[5]) institutionMapping=[NSDictionary dictionaryWithContentsOfFile:args[5]];
-
-
-            NSString *StudyInstanceUID=[args[3] lastPathComponent];
-            NSString *pacsURIString=[NSString stringWithFormat:args[4],args[1]];
-            NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
-            NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
-
+            if ([CLASSIFIEDname hasPrefix:@"."]) continue;
+            NSString *CLASSIFIEDpath=[CLASSIFIED stringByAppendingPathComponent:CLASSIFIEDname];
+            NSArray *properties=[CLASSIFIEDname componentsSeparatedByString:@"@"];
             
-#pragma mark loop SOPInstanceUID
-            NSArray *SOPInstanceUIDs=[[NSFileManager defaultManager] contentsOfDirectoryAtPath:args[3] error:&err];
-            NSUInteger SOPInstanceCount=[SOPInstanceUIDs count];
-            NSMutableData *body = [NSMutableData data];
-            NSMutableArray *packaged=[NSMutableArray array];
             
-            DJEncoderRegistration::registerCodecs(
-                                                  ECC_lossyRGB,
-                                                  EUC_never,
-                                                  OFFalse,
-                                                  OFFalse,
-                                                  0,
-                                                  0,
-                                                  0,
-                                                  OFTrue,
-                                                  ESS_444,
-                                                  OFFalse,
-                                                  OFFalse,
-                                                  0,
-                                                  0,
-                                                  0.0,
-                                                  0.0,
-                                                  0,
-                                                  0,
-                                                  0,
-                                                  0,
-                                                  OFTrue,
-                                                  OFTrue,
-                                                  OFFalse,
-                                                  OFFalse,
-                                                  OFTrue);
-
-            //com.apple.metadata:_kMDItemUserTags
-            //http://nshipster.com/extended-file-attributes/
-            //http://apple.stackexchange.com/questions/110662/possible-to-tag-a-folder-via-terminal
-            const char *name = "com.apple.metadata:_kMDItemUserTags";
-            const char *red = [@"(\"not stowed\n6\")" UTF8String];
-            const char *green = [@"(\"stowed\n2\")" UTF8String];
-            BOOL studyStowed=true;
-
-            for (NSUInteger i=0; i<SOPInstanceCount; i++)
+            NSString *institutionName=institutionMapping[properties[2]];
+            if (!institutionName) institutionName=institutionMapping[properties[3]];
+            NSLog(@"CLASSIFIED %@ -> %@",CLASSIFIEDname,institutionName);
+            if (!institutionName)
             {
+                NSLog(@"unknown aet and ip, moving folder to DISCARDED");
+                NSString *destName=[NSString stringWithFormat:@"%@@%f",CLASSIFIEDname,[[NSDate date]timeIntervalSinceReferenceDate]];
+                [fileManager moveItemAtPath:CLASSIFIEDpath
+                                     toPath:[DISCARDED stringByAppendingPathComponent:destName]
+                                      error:&error
+                 ];
+                continue;
+            }
+            NSString *pacsURIString=[NSString stringWithFormat:args[3],institutionName];
+            
+#pragma mark loop SOURCE
+            NSArray *SOURCEarray=[fileManager contentsOfDirectoryAtPath:CLASSIFIEDpath error:nil];
+            for (NSString *StudyInstanceUID in SOURCEarray)
+            {
+                NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
+                NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
                 
-                if ([SOPInstanceUIDs[i] hasPrefix:@"."]) continue;
-                
-                [body appendData:cdbcData];
-                [body appendData:ctadData];
-                
-                NSString *filePath=[args[3] stringByAppendingPathComponent:SOPInstanceUIDs[i]];
-                
-                DcmFileFormat fileformat;
-                OFCondition cond = fileformat.loadFile( [filePath UTF8String]);
-                DcmDataset *dataset = fileformat.getDataset();
-                DcmXfer original_xfer(dataset->getOriginalXfer());
-                BOOL mayJ2KR=false;
-                if (!original_xfer.isEncapsulated())
-                {
-                    DJ_RPLossy JP2KParamsLossLess(0 );//DCMLosslessQuality
-                    DcmRepresentationParameter *params = &JP2KParamsLossLess;
-                    DcmXfer oxferSyn( EXS_JPEG2000LosslessOnly);
-                    dataset->chooseRepresentation(EXS_JPEG2000LosslessOnly, params);
-                    if (dataset->canWriteXfer(EXS_JPEG2000LosslessOnly)) mayJ2KR=true;
-                    else NSLog(@"cannot J2KR: %@)",filePath);
-                }
-                fileformat.loadAllDataIntoMemory();
+                NSString *STUDYpath=[CLASSIFIEDpath stringByAppendingPathComponent:StudyInstanceUID];
 
-#pragma mark metadata adjustments for all files
+                NSString *COERCEDpath=[[COERCED stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
+                [fileManager createDirectoryAtPath:COERCEDpath withIntermediateDirectories:YES attributes:nil error:&error];
+                NSString *DISCARDEDpath=[[DISCARDED stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
+                [fileManager createDirectoryAtPath:DISCARDEDpath withIntermediateDirectories:YES attributes:nil error:&error];
+                NSString *ORIGINALSpath=[[ORIGINALS stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
+                [fileManager createDirectoryAtPath:ORIGINALSpath withIntermediateDirectories:YES attributes:nil error:&error];
+                NSString *REJECTEDpath=[[REJECTED stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
+                [fileManager createDirectoryAtPath:REJECTEDpath withIntermediateDirectories:YES attributes:nil error:&error];
+                NSString *STOWEDpath=[[STOWED stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
+                [fileManager createDirectoryAtPath:STOWEDpath withIntermediateDirectories:YES attributes:nil error:&error];
 
-                // 00081060=-^-^- NameofPhysiciansReadingStudy
-                delete dataset->remove( DcmTagKey( 0x0008, 0x1060));
-                dataset->putAndInsertString( DcmTagKey( 0x0008, 0x1060),[@"-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
-
-                // 00200010=29991231235959
-                delete dataset->remove( DcmTagKey( 0x0020, 0x0010));
-                dataset->putAndInsertString( DcmTagKey( 0x0020, 0x0010),[@"29991231235959" cStringUsingEncoding:NSASCIIStringEncoding] );
-
-                // 00080090=-^-^-^-
-                delete dataset->remove( DcmTagKey( 0x0008, 0x0090));
-                dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0090),[@"-^-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
+#pragma mark loop SOPInstanceUID
+                NSArray *SOPIUIDarray=[fileManager contentsOfDirectoryAtPath:STUDYpath error:&error];
+                NSUInteger SOPIUIDCount=[SOPIUIDarray count];
+                [body setData:[NSData data]];
+                [packaged removeAllObjects];
+                BOOL studyStowed=true;
                 
-                //remove SQ reqService
-                delete dataset->remove( DcmTagKey( 0x0032, 0x1034));
-                
-                // "GEIIS" The problematic private group, containing a *always* JPEG compressed PixelData
-                delete dataset->remove( DcmTagKey( 0x0009, 0x1110));
-
-#pragma mark institutionName adjustments
-                if (institutionMapping)
+                for (NSUInteger i=0; i<SOPIUIDCount; i++)
                 {
                     
-                    // 00080080=institutionName
-                    NSString *institutionName=institutionMapping[args[1]];
-                    if (!institutionName) institutionName=institutionMapping[args[2]];
+                    if ([SOPIUIDarray[i] hasPrefix:@"."]) continue;
+                    
+                    [body appendData:cdbcData];
+                    [body appendData:ctadData];
+                    
+                    NSString *filePath=[STUDYpath stringByAppendingPathComponent:SOPIUIDarray[i]];
+                    
+                    DcmFileFormat fileformat;
+                    OFCondition cond = fileformat.loadFile( [filePath UTF8String]);
+                    DcmDataset *dataset = fileformat.getDataset();
+                    DcmXfer original_xfer(dataset->getOriginalXfer());
+                    BOOL mayJ2KR=false;
+                    if (!original_xfer.isEncapsulated())
+                    {
+                        DJ_RPLossy JP2KParamsLossLess(0 );//DCMLosslessQuality
+                        DcmRepresentationParameter *params = &JP2KParamsLossLess;
+                        DcmXfer oxferSyn( EXS_JPEG2000LosslessOnly);
+                        dataset->chooseRepresentation(EXS_JPEG2000LosslessOnly, params);
+                        if (dataset->canWriteXfer(EXS_JPEG2000LosslessOnly)) mayJ2KR=true;
+                        else NSLog(@"cannot J2KR: %@)",filePath);
+                    }
+                    fileformat.loadAllDataIntoMemory();
+                    
+        #pragma mark metadata adjustments for all files
+                    
+                    // 00081060=-^-^- NameofPhysiciansReadingStudy
+                    delete dataset->remove( DcmTagKey( 0x0008, 0x1060));
+                    dataset->putAndInsertString( DcmTagKey( 0x0008, 0x1060),[@"-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
+                    
+                    // 00200010=29991231235959
+                    delete dataset->remove( DcmTagKey( 0x0020, 0x0010));
+                    dataset->putAndInsertString( DcmTagKey( 0x0020, 0x0010),[@"29991231235959" cStringUsingEncoding:NSASCIIStringEncoding] );
+                    
+                    // 00080090=-^-^-^-
+                    delete dataset->remove( DcmTagKey( 0x0008, 0x0090));
+                    dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0090),[@"-^-^-^-" cStringUsingEncoding:NSASCIIStringEncoding] );
+                    
+                    //remove SQ reqService
+                    delete dataset->remove( DcmTagKey( 0x0032, 0x1034));
+                    
+                    // "GEIIS" The problematic private group, containing a *always* JPEG compressed PixelData
+                    delete dataset->remove( DcmTagKey( 0x0009, 0x1110));
+                    
+        #pragma mark institutionName adjustments
                     if (institutionName)
                     {
                         delete dataset->remove( DcmTagKey( 0x0008, 0x0080));
                         dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0080),[institutionName cStringUsingEncoding:NSASCIIStringEncoding] );
                     }
-                }
-                
-                
-#pragma mark compress and add to stream (revisar bien a que corresponde toda esta sintaxis!!!)
-                NSString *J2KR=[filePath stringByAppendingPathExtension:@"j2kr"];
-                NSString *ELE=[filePath stringByAppendingPathExtension:@"ele"];
-                if (
-                       mayJ2KR
-                    && (
-                        (fileformat.saveFile(
-                         [J2KR UTF8String],
-                         EXS_JPEG2000LosslessOnly
-                         )
-                        ).good()
-                       )
-                    )
-                {
-                    [body appendData:[NSData dataWithContentsOfFile:J2KR]];
-                    [packaged addObject:J2KR];
-                }
-                else if (
-                         (fileformat.saveFile(
-                                              [ELE UTF8String],
-                                              EXS_LittleEndianExplicit
-                                              )
-                          ).good()
-                         )
-                {
-                    [body appendData:[NSData dataWithContentsOfFile:ELE]];
-                    [packaged addObject:ELE];
-                }
-                else
-                {
-                    [body appendData:[NSData dataWithContentsOfFile:filePath]];
-                    [packaged addObject:SOPInstanceUIDs[i]];
-                }
-
-                
-#pragma mark send stow
-                if (([body length] > 10000000) || (i==SOPInstanceCount-1))
-                {
-                    NSLog(@"sending: %d bytes",[body length]);
-                    //finalize body
-                    [body appendData:cdbdcData];
-                    //create request
-                    NSMutableURLRequest *request=
-                    [NSMutableURLRequest requestWithURL:pacsURI];
-                    [request setHTTPMethod:@"POST"];
-                    [request setTimeoutInterval:300];
-                    NSString *contentType = [NSString stringWithFormat:@"multipart/related;type=application/dicom;boundary=%@", boundaryString];
-                    [request addValue:contentType forHTTPHeaderField:@"Content-Type"];
-                    [request setHTTPBody:body];
                     
-                    //send stow
-                    NSHTTPURLResponse *response;
-                    NSData *responseData=[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&err];
-                    if (  !responseData
-                        ||!(
-                            ([response statusCode]==200)
-                            ||([response statusCode]==500)
+                    
+        #pragma mark compress and add to stream (revisar bien a que corresponde toda esta sintaxis!!!)
+                    NSString *COERCEDfile=[COERCEDpath stringByAppendingPathComponent:SOPIUIDarray[i]];
+                    if (
+                        mayJ2KR
+                        && (
+                            (fileformat.saveFile(
+                                                 [COERCEDfile UTF8String],
+                                                 EXS_JPEG2000LosslessOnly
+                                                 )
+                             ).good()
                             )
                         )
                     {
-                        NSLog(@"%@",[response description]);
-                        //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
-                        studyStowed=false;
-                        /*
-                         Failure
-                         =======
-                         400 - Bad Request (bad syntax)
-                         401 - Unauthorized
-                         403 - Forbidden (insufficient priviledges)
-                         409 - Conflict (formed correctly - system unable to store due to a conclict in the request
-                         (e.g., unsupported SOP Class or StudyInstance UID mismatch)
-                         additional information can be found in teh xml response body
-                         415 - unsopported media type (e.g. not supporting JSON)
-                         500 (instance already exists in db - delete file)
-                         503 - Busy (out of resource)
-                         
-                         Warning
-                         =======
-                         202 - Accepted (stored some - not all)
-                         additional information can be found in teh xml response body
-                         
-                         Success
-                         =======
-                         200 - OK (successfully stored all the instances)
-                         
-                         */
-                        
-                        for (NSString *fp in packaged)
-                        {
-                            const char *c = [fp fileSystemRepresentation];
-                            if (setxattr(c, name, red, strlen(red), 0, 0)==-1)NSLog(@"not stowed and not red-colored %@",fp);
-                            if (![[fp pathExtension]isEqualToString:@"dcm"])
-                            {
-                                NSString *fpd=[fp stringByDeletingPathExtension];
-                                const char *d = [fpd fileSystemRepresentation];
-                                if (setxattr(d, name, red, strlen(red), 0, 0)==-1)NSLog(@"not stowed and not red-colored %@",fpd);
-                            }
-                            
-                        }
+                        [body appendData:[NSData dataWithContentsOfFile:COERCEDfile]];
+                        [packaged addObject:COERCEDfile];
+                        [fileManager moveItemAtPath:filePath toPath:[ORIGINALSpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
+                    }
+                    else if (
+                             (fileformat.saveFile(
+                                                  [COERCEDfile UTF8String],
+                                                  EXS_LittleEndianExplicit
+                                                  )
+                              ).good()
+                             )
+                    {
+                        [body appendData:[NSData dataWithContentsOfFile:COERCEDfile]];
+                        [packaged addObject:COERCEDfile];
+                        [fileManager moveItemAtPath:filePath toPath:[ORIGINALSpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
                     }
                     else
                     {
-                        for (NSString *fp in packaged)
-                        {
-                            const char *c = [fp fileSystemRepresentation];
-                            if (setxattr(c, name, green, strlen(green), 0, 0)==-1)NSLog(@"stowed but not green-colored %@",fp);
-                            if (![[fp pathExtension]isEqualToString:@"dcm"])
-                            {
-                                NSString *fpd=[fp stringByDeletingPathExtension];
-                                const char *d = [fpd fileSystemRepresentation];
-                                if (setxattr(d, name, green, strlen(green), 0, 0)==-1)NSLog(@"stowed but not gren-colored %@",fpd);
-                            }
-                            
-                        }
+                        //no fue posible la coerci—n ni en J2KR ni en ELE
+                        //no se manda al PACS
+                        //se traslada el original a DISCARDED
+                        [fileManager moveItemAtPath:filePath toPath:[DISCARDEDpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
+                    }
+                    
+                    
+        #pragma mark send stow
+                    if (([body length] > 10000000) || (i==SOPIUIDCount-1))
+                    {
+                        //finalize body
+                        [body appendData:cdbdcData];
+                        //create request
+                        NSMutableURLRequest *request=
+                        [NSMutableURLRequest requestWithURL:pacsURI];
+                        [request setHTTPMethod:@"POST"];
+                        [request setTimeoutInterval:300];
+                        NSString *contentType = [NSString stringWithFormat:@"multipart/related;type=application/dicom;boundary=%@", boundaryString];
+                        [request addValue:contentType forHTTPHeaderField:@"Content-Type"];
+                        [request setHTTPBody:body];
                         
-                        NSData *qidoResponse=[NSData dataWithContentsOfURL:[NSURL URLWithString:qidoRequest]];
-                        if (!qidoResponse) NSLog(@"status:%d  -  could not verify pacs reception",[response statusCode] );
+                        //send stow
+                        NSHTTPURLResponse *response;
+                        NSData *responseData=[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+                        //NSLog(@"sent: %d bytes",[body length]);
+                        if (  !responseData
+                            ||!(
+                                ([response statusCode]==200)
+                                ||([response statusCode]==500)
+                                )
+                            )
+                        {
+                            NSLog(@"%@",[response description]);
+                            //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
+                            studyStowed=false;
+                            /*
+                             Failure
+                             =======
+                             400 - Bad Request (bad syntax)
+                             401 - Unauthorized
+                             403 - Forbidden (insufficient priviledges)
+                             409 - Conflict (formed correctly - system unable to store due to a conclict in the request
+                             (e.g., unsupported SOP Class or StudyInstance UID mismatch)
+                             additional information can be found in teh xml response body
+                             415 - unsopported media type (e.g. not supporting JSON)
+                             500 (instance already exists in db - delete file)
+                             503 - Busy (out of resource)
+                             
+                             Warning
+                             =======
+                             202 - Accepted (stored some - not all)
+                             additional information can be found in teh xml response body
+                             
+                             Success
+                             =======
+                             200 - OK (successfully stored all the instances)
+                             
+                             */
+                            
+                            for (NSString *fp in packaged)
+                            {
+                                [fileManager moveItemAtPath:fp toPath:[REJECTEDpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
+                            }
+                        }
                         else
                         {
-                            NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&err][0];
-                            
-                            //NSLog(@"%@",[args[3] lastPathComponent]);
-                            NSLog(@"status:%d\r\n%@ - %@/%@",
-                                  [response statusCode],
-                                  ((d[@"00080061"])[@"Value"])[0],
-                                  ((d[@"00201206"])[@"Value"])[0],
-                                  ((d[@"00201208"])[@"Value"])[0]
-                                  );
+                            for (NSString *fp in packaged)
+                            {
+                                [fileManager moveItemAtPath:fp toPath:[STOWEDpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
+                            }
+                            //NSLog(@"%@",qidoRequest);
+                            NSData *qidoResponse=[NSData dataWithContentsOfURL:[NSURL URLWithString:qidoRequest]];
+                            if (!qidoResponse) NSLog(@"status:%d  -  could not verify pacs reception",[response statusCode] );
+                            else
+                            {
+                                NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&error][0];
+                                
+                                //NSLog(@"%@",[d description]);
+                                NSLog(@"PACS: %@ %@ (%@/%@)",
+                                      ((d[@"00080061"])[@"Value"])[0],
+                                      StudyInstanceUID,
+                                      ((d[@"00201206"])[@"Value"])[0],
+                                      ((d[@"00201208"])[@"Value"])[0]
+                                      );
+                            }
                         }
+                        [body setData:[NSData data]];
+                        [packaged removeAllObjects];
                     }
-                    [body setData:[NSData data]];
-                    [packaged removeAllObjects];
                 }
-            }
-            const char *f = [args[3] fileSystemRepresentation];
-            if (studyStowed)
-            {
-                if(-1==setxattr(f, name, green, strlen(green), 0, 0))NSLog(@"stowed but not gren-colored %@",args[3]);
-            }
-            else
-            {
-                if (-1==setxattr(f, name, red, strlen(red), 0, 0))NSLog(@"not stowed and not gren-colored %@",args[3]);
-            }
-    
-            //http://superuser.com/questions/82106/where-does-spotlight-store-its-metadata-index/256311#256311
-            //osascript -e 'on run {f, c}' -e 'tell app "Finder" to set comment of (POSIX file f as alias) to c' -e end /Users/jacquesfauquex/a hola
-            [NSTask launchedTaskWithLaunchPath:@"/usr/bin/osascript"
-                                     arguments:@[@"-e",
-                                                 @"on run {f, c}",
-                                                 @"-e",
-                                                 @"tell app \"Finder\" to set comment of (POSIX file f as alias) to c",
-                                                 @"-e",
-                                                 @"end",
-                                                 args[3],
-                                                 [NSString stringWithFormat:@"%@@%@",args[1],args[2]]
-                                                 ]
-             ];
+                if([[fileManager contentsOfDirectoryAtPath:STUDYpath error:&error]count]==0)[fileManager removeItemAtPath:STUDYpath error:&error];
+                
+                if([[fileManager contentsOfDirectoryAtPath:COERCEDpath error:&error]count]==0)[fileManager removeItemAtPath:COERCEDpath error:&error];
 
+                if([[fileManager contentsOfDirectoryAtPath:DISCARDEDpath error:&error]count]==0)[fileManager removeItemAtPath:DISCARDEDpath error:&error];
+
+                if([[fileManager contentsOfDirectoryAtPath:ORIGINALSpath error:&error]count]==0)[fileManager removeItemAtPath:ORIGINALSpath error:&error];
+
+                if([[fileManager contentsOfDirectoryAtPath:REJECTEDpath error:&error]count]==0)[fileManager removeItemAtPath:REJECTEDpath error:&error];
+
+                if([[fileManager contentsOfDirectoryAtPath:STOWEDpath error:&error]count]==0)[fileManager removeItemAtPath:STOWEDpath error:&error];
+            }
         }
     }
     return 0;
