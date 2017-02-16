@@ -1092,7 +1092,6 @@
 		4A16A76A1DED1900007E10B2 /* libkdu_v73R.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A169D7A1DE8B2E4007E10B2 /* libkdu_v73R.a */; };
 		4A16A76B1DED1900007E10B2 /* libz.1.2.8.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A1685891DE6584D007E10B2 /* libz.1.2.8.tbd */; };
 		4A16A76C1DED1900007E10B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
-		4A16A7711DED1A64007E10B2 /* storestow.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4A16A7701DED1A64007E10B2 /* storestow.mm */; };
 		4A16A7721DED1EF1007E10B2 /* J2KR(noCodec).h in Headers */ = {isa = PBXBuildFile; fileRef = 4A169F011DECA76D007E10B2 /* J2KR(noCodec).h */; };
 		4AA0A5F31E48E3A2005B3E9D /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AA0A5F21E48E3A2005B3E9D /* Security.framework */; };
 		4AE1496E1DF87668001B722F /* J2KR(noCodec).mm in Sources */ = {isa = PBXBuildFile; fileRef = 4AE1496D1DF87668001B722F /* J2KR(noCodec).mm */; };
@@ -1452,6 +1451,7 @@
 		4AEAD3B61CC6E475000FEA7F /* djeijg2k_kdu.cc in Sources */ = {isa = PBXBuildFile; fileRef = CEFF01441286FB2000D69BB8 /* djeijg2k_kdu.cc */; };
 		4AEAD3C61CC6E475000FEA7F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
 		4AEAD5721CC6E5A7000FEA7F /* KDU.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4AEAD5711CC6E5A7000FEA7F /* KDU.mm */; };
+		841E653C1E53488A00CDA264 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4A16A7701DED1A64007E10B2 /* main.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -1473,7 +1473,6 @@
 		4A1687201DE76200007E10B2 /* djeijg2k_opj.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = djeijg2k_opj.cc; path = "Binaries/dcmtk-source/dcmjpeg/djeijg2k_opj.cc"; sourceTree = "<group>"; };
 		4A169D771DE7B8DC007E10B2 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		4A169D7A1DE8B2E4007E10B2 /* libkdu_v73R.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libkdu_v73R.a; sourceTree = "<group>"; };
-		4A169D821DEC9FAC007E10B2 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4A169EF51DECA012007E10B2 /* dcmtk */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dcmtk; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A169EFD1DECA4C1007E10B2 /* djdijp2k.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = djdijp2k.cc; path = "Binaries/dcmtk-source/dcmjpeg/djdijp2k.cc"; sourceTree = "<group>"; };
 		4A169EFE1DECA4C1007E10B2 /* djeijg2k.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = djeijg2k.cc; path = "Binaries/dcmtk-source/dcmjpeg/djeijg2k.cc"; sourceTree = "<group>"; };
@@ -1743,7 +1742,7 @@
 		4A16A2061DECABC5007E10B2 /* oftypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = oftypes.h; path = "Binaries/dcmtk-source/ofstd/oftypes.h"; sourceTree = "<group>"; };
 		4A16A2071DECABC5007E10B2 /* ofuoset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ofuoset.h; path = "Binaries/dcmtk-source/ofstd/ofuoset.h"; sourceTree = "<group>"; };
 		4A16A76F1DED1900007E10B2 /* storestow */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = storestow; sourceTree = BUILT_PRODUCTS_DIR; };
-		4A16A7701DED1A64007E10B2 /* storestow.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = storestow.mm; sourceTree = "<group>"; };
+		4A16A7701DED1A64007E10B2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		4A9059EC1CEF908600A9CA2F /* ODvr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ODvr.h; sourceTree = "<group>"; };
 		4AA0A5F21E48E3A2005B3E9D /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		4AC642D81CE57FF500A25E46 /* ODMetaInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ODMetaInfo.h; sourceTree = "<group>"; };
@@ -2442,7 +2441,7 @@
 			isa = PBXGroup;
 			children = (
 				4A0EBA3F1DEEDAA000ECDC6C /* TODO.txt */,
-				4A16A7701DED1A64007E10B2 /* storestow.mm */,
+				4A16A7701DED1A64007E10B2 /* main.mm */,
 				4A16A3101DECAC9C007E10B2 /* dcmtk-j2kr(static) */,
 				4A169D771DE7B8DC007E10B2 /* README.md */,
 				84A9D44712F7F8BE00DA1F99 /* KDU32 */,
@@ -2450,7 +2449,6 @@
 				4AF940601CE5720100551476 /* OD */,
 				AB724F1C0ADE6CFC00A212A0 /* categories */,
 				BFBF3AAF09B6820C00545F5E /* dcmtk */,
-				4A169D811DEC9FAC007E10B2 /* storestow */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
 			);
@@ -2483,14 +2481,6 @@
 				4A1687201DE76200007E10B2 /* djeijg2k_opj.cc */,
 			);
 			name = OPJ64;
-			sourceTree = "<group>";
-		};
-		4A169D811DEC9FAC007E10B2 /* storestow */ = {
-			isa = PBXGroup;
-			children = (
-				4A169D821DEC9FAC007E10B2 /* main.m */,
-			);
-			path = storestow;
 			sourceTree = "<group>";
 		};
 		4A16A3101DECAC9C007E10B2 /* dcmtk-j2kr(static) */ = {
@@ -4393,6 +4383,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				841E653C1E53488A00CDA264 /* main.mm in Sources */,
 				4A16A6051DED1900007E10B2 /* dcfilefo.cc in Sources */,
 				4A16A6061DED1900007E10B2 /* dcxfer.cc in Sources */,
 				4A16A6071DED1900007E10B2 /* dcvrut.cc in Sources */,
@@ -4737,7 +4728,6 @@
 				4A16A75A1DED1900007E10B2 /* jcdctmgr.c in Sources */,
 				4A16A75B1DED1900007E10B2 /* jclossy.c in Sources */,
 				4A16A75C1DED1900007E10B2 /* jclossls.c in Sources */,
-				4A16A7711DED1A64007E10B2 /* storestow.mm in Sources */,
 				4A16A75D1DED1900007E10B2 /* jclhuff.c in Sources */,
 				4A16A75E1DED1900007E10B2 /* jccolor.c in Sources */,
 				4A16A75F1DED1900007E10B2 /* jcarith.c in Sources */,

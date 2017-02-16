@@ -3,7 +3,15 @@
 //  storestow
 //
 //  Created by jacquesfauquex on 2014-09-01.
-//  Copyright (c) 2016 opendicom.com All rights reserved.
+//  Copyright (c) 2017 opendicom.com All rights reserved.
+
+/*
+ args
+ [0] "/Users/Shared/stow/stow",
+ [1] path to institutionMapping.plist
+ [2] path to the root folder
+ [3] url string del PACS "http://192.168.0.7:8080/dcm4chee-arc/aets/%@/rs/studies"
+ */
 
 /*
  Source code and binaries are subject to the terms of the Mozilla Public License, v. 2.0.
@@ -32,7 +40,7 @@
  You.
  */
 #include "J2KR(noCodec).h"
-#import "sys/xattr.h"
+//#import "sys/xattr.h"
 
 static NSError *error=nil;
 int main(int argc, const char * argv[])
@@ -95,12 +103,6 @@ int main(int argc, const char * argv[])
                                               OFFalse,
                                               OFTrue);
         
-        //com.apple.metadata:_kMDItemUserTags
-        //http://nshipster.com/extended-file-attributes/
-        //http://apple.stackexchange.com/questions/110662/possible-to-tag-a-folder-via-terminal
-        const char *name = "com.apple.metadata:_kMDItemUserTags";
-        const char *red = [@"(\"not stowed\n6\")" UTF8String];
-        const char *green = [@"(\"stowed\n2\")" UTF8String];
 
 #pragma mark args
         /*
@@ -124,7 +126,7 @@ int main(int argc, const char * argv[])
         NSString *REJECTED=[args[2] stringByAppendingPathComponent:@"REJECTED"];
         NSString *STOWED=[args[2] stringByAppendingPathComponent:@"STOWED"];
 
-        NSArray *CLASSIFIEDarray=[fileManager contentsOfDirectoryAtPath:CLASSIFIED error:nil];
+        NSArray *CLASSIFIEDarray=[fileManager contentsOfDirectoryAtPath:CLASSIFIED error:&error];
         for (NSString *CLASSIFIEDname in CLASSIFIEDarray)
         {
             if ([CLASSIFIEDname hasPrefix:@"."]) continue;
@@ -132,9 +134,9 @@ int main(int argc, const char * argv[])
             NSArray *properties=[CLASSIFIEDname componentsSeparatedByString:@"@"];
             
             
-            NSString *institutionName=institutionMapping[properties[2]];
-            if (!institutionName) institutionName=institutionMapping[properties[3]];
-            NSLog(@"CLASSIFIED %@ -> %@",CLASSIFIEDname,institutionName);
+            NSString *institutionName=institutionMapping[properties[1]];
+            if (!institutionName) institutionName=institutionMapping[properties[2]];
+            NSLog(@"%@ -> %@",CLASSIFIEDname,institutionName);
             if (!institutionName)
             {
                 NSLog(@"unknown aet and ip, moving folder to DISCARDED");
@@ -151,6 +153,7 @@ int main(int argc, const char * argv[])
             NSArray *SOURCEarray=[fileManager contentsOfDirectoryAtPath:CLASSIFIEDpath error:nil];
             for (NSString *StudyInstanceUID in SOURCEarray)
             {
+                if ([CLASSIFIEDname hasPrefix:@"."]) continue;
                 NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
                 NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
                 
@@ -172,7 +175,6 @@ int main(int argc, const char * argv[])
                 NSUInteger SOPIUIDCount=[SOPIUIDarray count];
                 [body setData:[NSData data]];
                 [packaged removeAllObjects];
-                BOOL studyStowed=true;
                 
                 for (NSUInteger i=0; i<SOPIUIDCount; i++)
                 {
@@ -220,12 +222,9 @@ int main(int argc, const char * argv[])
                     // "GEIIS" The problematic private group, containing a *always* JPEG compressed PixelData
                     delete dataset->remove( DcmTagKey( 0x0009, 0x1110));
                     
-        #pragma mark institutionName adjustments
-                    if (institutionName)
-                    {
-                        delete dataset->remove( DcmTagKey( 0x0008, 0x0080));
-                        dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0080),[institutionName cStringUsingEncoding:NSASCIIStringEncoding] );
-                    }
+#pragma mark institutionName adjustments
+                    delete dataset->remove( DcmTagKey( 0x0008, 0x0080));
+                    dataset->putAndInsertString( DcmTagKey( 0x0008, 0x0080),[institutionName cStringUsingEncoding:NSASCIIStringEncoding] );
                     
                     
         #pragma mark compress and add to stream (revisar bien a que corresponde toda esta sintaxis!!!)
@@ -248,7 +247,7 @@ int main(int argc, const char * argv[])
                     else if (
                              (fileformat.saveFile(
                                                   [COERCEDfile UTF8String],
-                                                  EXS_LittleEndianExplicit
+                                                  original_xfer.getXfer()
                                                   )
                               ).good()
                              )
@@ -271,6 +270,8 @@ int main(int argc, const char * argv[])
                     {
                         //finalize body
                         [body appendData:cdbdcData];
+                        //[body writeToFile:[args[2]stringByAppendingPathComponent:@"stow.data"] atomically:true];
+                        
                         //create request
                         NSMutableURLRequest *request=
                         [NSMutableURLRequest requestWithURL:pacsURI];
@@ -282,8 +283,8 @@ int main(int argc, const char * argv[])
                         
                         //send stow
                         NSHTTPURLResponse *response;
-                        NSData *responseData=[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-                        //NSLog(@"sent: %d bytes",[body length]);
+                                                NSData *responseData=[NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+                     
                         if (  !responseData
                             ||!(
                                 ([response statusCode]==200)
@@ -293,43 +294,44 @@ int main(int argc, const char * argv[])
                         {
                             NSLog(@"%@",[response description]);
                             //NSLog(@"%@",[[NSString alloc]initWithData:responseData encoding:NSUTF8StringEncoding]);
-                            studyStowed=false;
-                            /*
-                             Failure
-                             =======
-                             400 - Bad Request (bad syntax)
-                             401 - Unauthorized
-                             403 - Forbidden (insufficient priviledges)
-                             409 - Conflict (formed correctly - system unable to store due to a conclict in the request
-                             (e.g., unsupported SOP Class or StudyInstance UID mismatch)
-                             additional information can be found in teh xml response body
-                             415 - unsopported media type (e.g. not supporting JSON)
-                             500 (instance already exists in db - delete file)
-                             503 - Busy (out of resource)
+
+                            //Failure
+                             //=======
+                             //400 - Bad Request (bad syntax)
+                             //401 - Unauthorized
+                             //403 - Forbidden (insufficient priviledges)
+                             //409 - Conflict (formed correctly - system unable to store due to a conclict in the request
+                             //(e.g., unsupported SOP Class or StudyInstance UID mismatch)
+                             //additional information can be found in teh xml response body
+                             //415 - unsopported media type (e.g. not supporting JSON)
+                             //500 (instance already exists in db - delete file)
+                             //503 - Busy (out of resource)
                              
-                             Warning
-                             =======
-                             202 - Accepted (stored some - not all)
-                             additional information can be found in teh xml response body
+                             //Warning
+                             //=======
+                             //202 - Accepted (stored some - not all)
+                             //additional information can be found in teh xml response body
                              
-                             Success
-                             =======
-                             200 - OK (successfully stored all the instances)
+                             //Success
+                             //=======
+                             //200 - OK (successfully stored all the instances)
                              
-                             */
-                            
+                         
                             for (NSString *fp in packaged)
                             {
-                                [fileManager moveItemAtPath:fp toPath:[REJECTEDpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
+                                [fileManager moveItemAtPath:fp toPath:[REJECTEDpath stringByAppendingPathComponent:[fp lastPathComponent]] error:&error];
                             }
                         }
                         else
                         {
+                            //NSLog(@"sent: %d bytes",[body length]);
                             for (NSString *fp in packaged)
                             {
-                                [fileManager moveItemAtPath:fp toPath:[STOWEDpath stringByAppendingPathComponent:SOPIUIDarray[i]] error:&error];
+                                [fileManager moveItemAtPath:fp toPath:[STOWEDpath stringByAppendingPathComponent:[fp lastPathComponent]] error:&error];
                             }
-                            //NSLog(@"%@",qidoRequest);
+                            NSLog(@"%@",qidoRequest);
+                            
+                     
                             NSData *qidoResponse=[NSData dataWithContentsOfURL:[NSURL URLWithString:qidoRequest]];
                             if (!qidoResponse) NSLog(@"status:%d  -  could not verify pacs reception",[response statusCode] );
                             else
@@ -337,17 +339,19 @@ int main(int argc, const char * argv[])
                                 NSDictionary *d=[NSJSONSerialization JSONObjectWithData:qidoResponse options:0 error:&error][0];
                                 
                                 //NSLog(@"%@",[d description]);
-                                NSLog(@"PACS: %@ %@ (%@/%@)",
+                                NSLog(@"%@ %@ (%@/%@) [+%d]",
                                       ((d[@"00080061"])[@"Value"])[0],
                                       StudyInstanceUID,
                                       ((d[@"00201206"])[@"Value"])[0],
-                                      ((d[@"00201208"])[@"Value"])[0]
+                                      ((d[@"00201208"])[@"Value"])[0],
+                                      [body length]
                                       );
                             }
                         }
                         [body setData:[NSData data]];
                         [packaged removeAllObjects];
                     }
+                    
                 }
                 if([[fileManager contentsOfDirectoryAtPath:STUDYpath error:&error]count]==0)[fileManager removeItemAtPath:STUDYpath error:&error];
                 
