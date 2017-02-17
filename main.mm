@@ -42,6 +42,40 @@
 #include "J2KR(noCodec).h"
 //#import "sys/xattr.h"
 
+int task(NSString *launchPath, NSArray *launchArgs, NSData *writeData, NSMutableData *readData)
+{
+    NSTask *task=[[NSTask alloc]init];
+    [task setLaunchPath:launchPath];
+    [task setArguments:launchArgs];
+    //NSLog(@"%@",[task arguments]);
+    NSPipe *writePipe = [NSPipe pipe];
+    NSFileHandle *writeHandle = [writePipe fileHandleForWriting];
+    [task setStandardInput:writePipe];
+    
+    NSPipe* readPipe = [NSPipe pipe];
+    NSFileHandle *readingFileHandle=[readPipe fileHandleForReading];
+    [task setStandardOutput:readPipe];
+    [task setStandardError:readPipe];
+    
+    [task launch];
+    [writeHandle writeData:writeData];
+    [writeHandle closeFile];
+    
+    NSData *dataPiped = nil;
+    while((dataPiped = [readingFileHandle availableData]) && [dataPiped length])
+    {
+        [readData appendData:dataPiped];
+    }
+    //while( [task isRunning]) [NSThread sleepForTimeInterval: 0.1];
+    //[task waitUntilExit];		// <- This is VERY DANGEROUS : the main runloop is continuing...
+    //[aTask interrupt];
+    
+    [task waitUntilExit];
+    int terminationStatus = [task terminationStatus];
+    if (terminationStatus!=0) NSLog(@"ERROR task terminationStatus: %d",terminationStatus);
+    return terminationStatus;
+}
+
 static NSError *error=nil;
 int main(int argc, const char * argv[])
 {
@@ -140,25 +174,43 @@ int main(int argc, const char * argv[])
             if (!institutionName)
             {
                 NSLog(@"unknown aet and ip, moving folder to DISCARDED");
-                NSString *destName=[NSString stringWithFormat:@"%@@%f",CLASSIFIEDname,[[NSDate date]timeIntervalSinceReferenceDate]];
                 [fileManager moveItemAtPath:CLASSIFIEDpath
-                                     toPath:[DISCARDED stringByAppendingPathComponent:destName]
+                                     toPath:[NSString stringWithFormat:@"%@/%@@%f",
+                                             DISCARDED,CLASSIFIEDname,
+                                             [[NSDate date]timeIntervalSinceReferenceDate
+                                              ]
+                                             ]
                                       error:&error
                  ];
                 continue;
             }
             NSString *pacsURIString=[NSString stringWithFormat:args[3],institutionName];
             
-#pragma mark loop SOURCE
-            NSArray *SOURCEarray=[fileManager contentsOfDirectoryAtPath:CLASSIFIEDpath error:nil];
-            for (NSString *StudyInstanceUID in SOURCEarray)
+#pragma mark loop STUDIES
+            for (NSString *StudyInstanceUID in [fileManager contentsOfDirectoryAtPath:CLASSIFIEDpath error:nil])
             {
-                if ([CLASSIFIEDname hasPrefix:@"."]) continue;
+                if ([StudyInstanceUID hasPrefix:@"."]) continue;
+
+                NSString *STUDYpath=[CLASSIFIEDpath stringByAppendingPathComponent:StudyInstanceUID];
+
+                NSMutableData *sqlResponseData=[NSMutableData data];
+                if ([args count]>4) task(@"/bin/bash",@[@"-s"],[[NSString stringWithFormat:args[4],StudyInstanceUID] dataUsingEncoding:NSUTF8StringEncoding],sqlResponseData);
+                NSString *sqlResponseString=[[NSString alloc]initWithData:sqlResponseData encoding:NSUTF8StringEncoding];
+                if (([sqlResponseData length]>0) && ![sqlResponseString hasPrefix:institutionName])
+                {
+                    //StudyIUID already registered in other institution
+                    NSLog(@"%@",sqlResponseString);
+                    
+                    NSString *DISCARDEDpath=[[DISCARDED stringByAppendingPathComponent:CLASSIFIEDname]stringByAppendingPathComponent:StudyInstanceUID];
+                    [fileManager createDirectoryAtPath:DISCARDEDpath withIntermediateDirectories:YES attributes:nil error:&error];
+                    [fileManager moveItemAtPath:STUDYpath toPath:DISCARDEDpath  error:&error];
+                    continue;
+                }
+                return 0;
+
                 NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
                 NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
                 
-                NSString *STUDYpath=[CLASSIFIEDpath stringByAppendingPathComponent:StudyInstanceUID];
-
                 NSString *COERCEDpath=[[COERCED stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
                 [fileManager createDirectoryAtPath:COERCEDpath withIntermediateDirectories:YES attributes:nil error:&error];
                 NSString *DISCARDEDpath=[[DISCARDED stringByAppendingPathComponent:CLASSIFIEDname] stringByAppendingPathComponent:StudyInstanceUID];
@@ -178,7 +230,6 @@ int main(int argc, const char * argv[])
                 
                 for (NSUInteger i=0; i<SOPIUIDCount; i++)
                 {
-                    
                     if ([SOPIUIDarray[i] hasPrefix:@"."]) continue;
                     
                     [body appendData:cdbcData];
