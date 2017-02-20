@@ -1,8 +1,8 @@
 //
-//  storestow.mm
-//  storestow
+//  main.mm
+//  spoolstow
 //
-//  Created by jacquesfauquex on 2014-09-01.
+//  Created by jacquesfauquex on 2017-02-20.
 //  Copyright (c) 2017 opendicom.com All rights reserved.
 
 /*
@@ -11,6 +11,7 @@
  [1] path to institutionMapping.plist
  [2] path to the root folder
  [3] url string del PACS "http://192.168.0.7:8080/dcm4chee-arc/aets/%@/rs/studies"
+ [4] "export MYSQL_PWD=pacs;/usr/local/mysql/bin/mysql --raw --skip-column-names -upacs -h 192.168.0.7 -b pacsdb -e \"select access_control_id from study where study_iuid='%@'\" | awk -F\t '{print $1}'"
  */
 
 /*
@@ -206,7 +207,8 @@ int main(int argc, const char * argv[])
                     [fileManager moveItemAtPath:STUDYpath toPath:DISCARDEDpath  error:&error];
                     continue;
                 }
-
+                return 0;
+                
                 NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
                 NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
                 
