@@ -5,8 +5,6 @@
 
 *.xcbkptlist
 
-*.xcscheme
-
 storestow.xcodeproj/xcuserdata/*
 
 *.xcuserstate
