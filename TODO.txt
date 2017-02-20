@@ -7,8 +7,6 @@ Move to latest dcmtk used through dcmtk-objc (should be a dependency and the fil
 
 Create a stow URLsession routine
 
-Replace J2KR or ELE save to file by write to output stream in URLsession
-
 Improve checking of stow results
 
 Optionally consume MWL through findscu+dcmtk-objc and based on it and on a diccionary with rules, coerce the metadata on the fly.

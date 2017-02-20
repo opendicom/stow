@@ -1741,7 +1741,7 @@
 		4A16A2051DECABC5007E10B2 /* oftimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = oftimer.h; path = "Binaries/dcmtk-source/ofstd/oftimer.h"; sourceTree = "<group>"; };
 		4A16A2061DECABC5007E10B2 /* oftypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = oftypes.h; path = "Binaries/dcmtk-source/ofstd/oftypes.h"; sourceTree = "<group>"; };
 		4A16A2071DECABC5007E10B2 /* ofuoset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ofuoset.h; path = "Binaries/dcmtk-source/ofstd/ofuoset.h"; sourceTree = "<group>"; };
-		4A16A76F1DED1900007E10B2 /* storestow */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = storestow; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A16A76F1DED1900007E10B2 /* spoolstow */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = spoolstow; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A16A7701DED1A64007E10B2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		4A9059EC1CEF908600A9CA2F /* ODvr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ODvr.h; sourceTree = "<group>"; };
 		4AA0A5F21E48E3A2005B3E9D /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -2432,7 +2432,7 @@
 				4AEAD3DA1CC6E475000FEA7F /* KDU */,
 				4A1687121DE75970007E10B2 /* OPJ */,
 				4A169EF51DECA012007E10B2 /* dcmtk */,
-				4A16A76F1DED1900007E10B2 /* storestow */,
+				4A16A76F1DED1900007E10B2 /* spoolstow */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -3577,9 +3577,9 @@
 			productReference = 4A169EF51DECA012007E10B2 /* dcmtk */;
 			productType = "com.apple.product-type.tool";
 		};
-		4A16A6011DED1900007E10B2 /* storestow */ = {
+		4A16A6011DED1900007E10B2 /* spoolstow */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4A16A76D1DED1900007E10B2 /* Build configuration list for PBXNativeTarget "storestow" */;
+			buildConfigurationList = 4A16A76D1DED1900007E10B2 /* Build configuration list for PBXNativeTarget "spoolstow" */;
 			buildPhases = (
 				4A16A6021DED1900007E10B2 /* Headers */,
 				4A16A6041DED1900007E10B2 /* Sources */,
@@ -3589,9 +3589,9 @@
 			);
 			dependencies = (
 			);
-			name = storestow;
+			name = spoolstow;
 			productName = SafeDBRebuild;
-			productReference = 4A16A76F1DED1900007E10B2 /* storestow */;
+			productReference = 4A16A76F1DED1900007E10B2 /* spoolstow */;
 			productType = "com.apple.product-type.tool";
 		};
 		4AEAD2471CC6E475000FEA7F /* KDU */ = {
@@ -3622,7 +3622,7 @@
 				LastUpgradeCheck = 0810;
 				ORGANIZATIONNAME = "OsiriX Team";
 			};
-			buildConfigurationList = 7E76BED8085757B70073649A /* Build configuration list for PBXProject "storestow" */;
+			buildConfigurationList = 7E76BED8085757B70073649A /* Build configuration list for PBXProject "spoolstow" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -3647,7 +3647,7 @@
 				4A169D861DECA012007E10B2 /* dcmtk */,
 				4AEAD2471CC6E475000FEA7F /* KDU */,
 				4A16859A1DE75970007E10B2 /* OPJ */,
-				4A16A6011DED1900007E10B2 /* storestow */,
+				4A16A6011DED1900007E10B2 /* spoolstow */,
 			);
 		};
 /* End PBXProject section */
@@ -5309,7 +5309,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		4A16A76D1DED1900007E10B2 /* Build configuration list for PBXNativeTarget "storestow" */ = {
+		4A16A76D1DED1900007E10B2 /* Build configuration list for PBXNativeTarget "spoolstow" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4A16A76E1DED1900007E10B2 /* Development */,
@@ -5325,7 +5325,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		7E76BED8085757B70073649A /* Build configuration list for PBXProject "storestow" */ = {
+		7E76BED8085757B70073649A /* Build configuration list for PBXProject "spoolstow" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7E76BED9085757B70073649A /* Development */,

@@ -206,7 +206,6 @@ int main(int argc, const char * argv[])
                     [fileManager moveItemAtPath:STUDYpath toPath:DISCARDEDpath  error:&error];
                     continue;
                 }
-                return 0;
 
                 NSURL *pacsURI=[NSURL URLWithString:[NSString stringWithFormat:@"%@/%@",pacsURIString,StudyInstanceUID]];
                 NSString *qidoRequest=[NSString stringWithFormat:@"%@?StudyInstanceUID=%@",pacsURIString,StudyInstanceUID];
